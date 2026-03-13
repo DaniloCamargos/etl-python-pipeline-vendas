@@ -1,0 +1,109 @@
+{
+  "name": "(ADSIM) products_DigitalProgramming",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0d2d5dff-facc-4804-87ab-6a89a0c9f9b1",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": {
+          "__rl": true,
+          "value": "service-desk-472314",
+          "mode": "list",
+          "cachedResultName": "service-desk",
+          "cachedResultUrl": "https://console.cloud.google.com/bigquery?project=service-desk-472314"
+        },
+        "sqlQuery": "SELECT * FROM `service-desk-472314.coherent_voice_dataset.adsim_products_digitalProgramming` ORDER BY PRODUCT_ID DESC",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [
+        192,
+        -240
+      ],
+      "id": "bbf30f98-3ac6-41d7-9e5a-aaa457485785",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "googleApi": {
+          "id": "P1ObfdxLxoraseXn",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.adsim_products_digitalProgramming(\n  PRODUCT_ID,\n  PRODUCT_NAME,\n  DIGITAL_PROGRAMMING_ID,\n  DIGITAL_PROGRAMMING_REGISTER_DATE,\n  DIGITAL_PROGRAMMING_ITEMS_COUNT\n) VALUES (\n  {{ $json[\"PRODUCT_ID\"] }},\n  '{{ ($json[\"PRODUCT_NAME\"] || \"\").replace(/'/g, \"''\") }}',\n  {{ $json[\"DIGITAL_PROGRAMMING_ID\"] || 0 }},\n  {{ $json[\"DIGITAL_PROGRAMMING_REGISTER_DATE\"] \n       ? \"'\" + $json[\"DIGITAL_PROGRAMMING_REGISTER_DATE\"].substring(0,10) + \"'\" \n       : \"NULL\" }},\n  {{ $json[\"DIGITAL_PROGRAMMING_ITEMS_COUNT\"] || 0 }}\n)\nON CONFLICT (PRODUCT_ID) DO UPDATE SET\n  PRODUCT_NAME                    = EXCLUDED.PRODUCT_NAME,\n  DIGITAL_PROGRAMMING_ID          = EXCLUDED.DIGITAL_PROGRAMMING_ID,\n  DIGITAL_PROGRAMMING_ITEMS_COUNT = EXCLUDED.DIGITAL_PROGRAMMING_ITEMS_COUNT,\n  DIGITAL_PROGRAMMING_REGISTER_DATE = EXCLUDED.DIGITAL_PROGRAMMING_REGISTER_DATE;\n\n\nDELETE FROM public.adsim_products_digitalProgramming a\nUSING public.adsim_products_digitalProgramming b\nWHERE a.ctid < b.ctid\n  AND a.PRODUCT_ID = b.PRODUCT_ID\n  AND a.DIGITAL_PROGRAMMING_ID = b.DIGITAL_PROGRAMMING_ID;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        384,
+        -16
+      ],
+      "id": "3f8caabd-533d-4574-91d3-9c6f40383a99",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "pLSsHwpYD5mnH2Cn",
+          "name": "Postgres localhost acess"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bb7e7cb1-1540-4418-90f1-ecf54003cabc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e6ed923384cf08e422f15a1e80d73a7eab3ebd3551c7d14ee8736f66ea156267"
+  },
+  "id": "BNvy65kyVVt37UfA",
+  "tags": []
+}

@@ -1,0 +1,109 @@
+{
+  "name": "(ADSIM) productsProgramming_Items",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -464,
+        -48
+      ],
+      "id": "39f2c812-5f69-4402-a38d-7d8ae8686dc5",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": {
+          "__rl": true,
+          "value": "service-desk-472314",
+          "mode": "list",
+          "cachedResultName": "service-desk",
+          "cachedResultUrl": "https://console.cloud.google.com/bigquery?project=service-desk-472314"
+        },
+        "sqlQuery": "SELECT * FROM `service-desk-472314.coherent_voice_dataset.adsim_products_programming_items` ORDER BY ITEMS_LAST_UPDATE_DATE DESC",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [
+        -112,
+        -256
+      ],
+      "id": "9498ccfc-f6c7-47de-be94-84cf683d326f",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "googleApi": {
+          "id": "P1ObfdxLxoraseXn",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Insert ou update\nINSERT INTO public.adsim_products_programming_items (\n    PRODUCT_ID,\n    PRODUCT_NAME,\n    PROGRAMMING_ID,\n    ITEMS_ID,\n    ITEMS_REGISTER_DATE,\n    ITEMS_LAST_UPDATE_DATE,\n    ITEMS_START,\n    ITEMS_END,\n    ITEMS_DURATION_SECONDS,\n    ITEMS_UNITARY_VALUE,\n    ITEMS_NEGOTIATED_VALUE,\n    ITEMS_TABLE_VALUE,\n    ITEMS_TOTAL_VALUE,\n    ITEMS_DISCOUNT,\n    ITEMS_MARKETING_DISCOUNT,\n    ITEMS_IS_LOCK_CHANGES,\n    ITEMS_QUANTITY,\n    ITEMS_QUANTITY_TOTAL,\n    ITEMS_DISTRIBUTION_TYPE,\n    ITEMS_IS_PRODUCTION_COST_TO_DEFINE,\n    ITEMS_PRODUCTION_COST_VALUE\n) VALUES (\n    {{ $json[\"PRODUCT_ID\"] }},\n    '{{ ($json[\"PRODUCT_NAME\"] || \"\").replace(/'/g, \"''\") }}',\n    {{ $json[\"PROGRAMMING_ID\"] || 0 }},\n    {{ $json[\"ITEMS_ID\"] || 0 }},\n    {{ $json[\"ITEMS_REGISTER_DATE\"] !== null ? \"'\" + $json[\"ITEMS_REGISTER_DATE\"] + \"'\" : \"NULL\" }},\n    {{ $json[\"ITEMS_LAST_UPDATE_DATE\"] !== null ? \"'\" + $json[\"ITEMS_LAST_UPDATE_DATE\"] + \"'\" : \"NULL\" }},\n    {{ $json[\"ITEMS_START\"] !== null ? \"'\" + $json[\"ITEMS_START\"] + \"'\" : \"NULL\" }},\n    {{ $json[\"ITEMS_END\"] !== null ? \"'\" + $json[\"ITEMS_END\"] + \"'\" : \"NULL\" }},\n    {{ $json[\"ITEMS_DURATION_SECONDS\"] || 0 }},\n    {{ $json[\"ITEMS_UNITARY_VALUE\"] || 0 }},\n    {{ $json[\"ITEMS_NEGOTIATED_VALUE\"] || 0 }},\n    {{ $json[\"ITEMS_TABLE_VALUE\"] || 0 }},\n    {{ $json[\"ITEMS_TOTAL_VALUE\"] || 0 }},\n    {{ $json[\"ITEMS_DISCOUNT\"] || 0 }},\n    {{ $json[\"ITEMS_MARKETING_DISCOUNT\"] || 0 }},\n    {{ $json[\"ITEMS_IS_LOCK_CHANGES\"] !== null ? $json[\"ITEMS_IS_LOCK_CHANGES\"] : \"FALSE\" }},\n    {{ $json[\"ITEMS_QUANTITY\"] || 0 }},\n    {{ $json[\"ITEMS_QUANTITY_TOTAL\"] || 0 }},\n    '{{ ($json[\"ITEMS_DISTRIBUTION_TYPE\"] || \"\").replace(/'/g, \"''\") }}',\n    {{ $json[\"ITEMS_IS_PRODUCTION_COST_TO_DEFINE\"] !== null ? $json[\"ITEMS_IS_PRODUCTION_COST_TO_DEFINE\"] : \"FALSE\" }},\n    {{ $json[\"ITEMS_PRODUCTION_COST_VALUE\"] || 0 }}\n)\nON CONFLICT (ITEMS_ID) DO UPDATE SET\n    PRODUCT_ID                     = EXCLUDED.PRODUCT_ID,\n    PRODUCT_NAME                   = EXCLUDED.PRODUCT_NAME,\n    PROGRAMMING_ID                 = EXCLUDED.PROGRAMMING_ID,\n    ITEMS_REGISTER_DATE            = EXCLUDED.ITEMS_REGISTER_DATE,\n    ITEMS_LAST_UPDATE_DATE         = EXCLUDED.ITEMS_LAST_UPDATE_DATE,\n    ITEMS_START                    = EXCLUDED.ITEMS_START,\n    ITEMS_END                      = EXCLUDED.ITEMS_END,\n    ITEMS_DURATION_SECONDS         = EXCLUDED.ITEMS_DURATION_SECONDS,\n    ITEMS_UNITARY_VALUE            = EXCLUDED.ITEMS_UNITARY_VALUE,\n    ITEMS_NEGOTIATED_VALUE         = EXCLUDED.ITEMS_NEGOTIATED_VALUE,\n    ITEMS_TABLE_VALUE              = EXCLUDED.ITEMS_TABLE_VALUE,\n    ITEMS_TOTAL_VALUE              = EXCLUDED.ITEMS_TOTAL_VALUE,\n    ITEMS_DISCOUNT                 = EXCLUDED.ITEMS_DISCOUNT,\n    ITEMS_MARKETING_DISCOUNT       = EXCLUDED.ITEMS_MARKETING_DISCOUNT,\n    ITEMS_IS_LOCK_CHANGES          = EXCLUDED.ITEMS_IS_LOCK_CHANGES,\n    ITEMS_QUANTITY                 = EXCLUDED.ITEMS_QUANTITY,\n    ITEMS_QUANTITY_TOTAL           = EXCLUDED.ITEMS_QUANTITY_TOTAL,\n    ITEMS_DISTRIBUTION_TYPE        = EXCLUDED.ITEMS_DISTRIBUTION_TYPE,\n    ITEMS_IS_PRODUCTION_COST_TO_DEFINE = EXCLUDED.ITEMS_IS_PRODUCTION_COST_TO_DEFINE,\n    ITEMS_PRODUCTION_COST_VALUE    = EXCLUDED.ITEMS_PRODUCTION_COST_VALUE;\n\n-- Remover duplicados caso existam (opcional se ITEMS_ID for PK)\nDELETE FROM public.adsim_products_programming_items a\nUSING public.adsim_products_programming_items b\nWHERE a.ctid < b.ctid\n  AND a.ITEMS_ID = b.ITEMS_ID;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        176,
+        -64
+      ],
+      "id": "dbbeea88-b1cc-44fe-b297-e224f8b376d1",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "pLSsHwpYD5mnH2Cn",
+          "name": "Postgres localhost acess"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "629363c3-e84d-49b3-bad5-62ec9386aa14",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e6ed923384cf08e422f15a1e80d73a7eab3ebd3551c7d14ee8736f66ea156267"
+  },
+  "id": "VJPgEWq7oHghQNFV",
+  "tags": []
+}

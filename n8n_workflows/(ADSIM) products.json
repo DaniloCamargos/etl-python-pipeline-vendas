@@ -1,0 +1,133 @@
+{
+  "name": "(ADSIM) products",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "226dbdeb-83b7-467c-866f-c1a7d162a18f",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": {
+          "__rl": true,
+          "value": "service-desk-472314",
+          "mode": "list",
+          "cachedResultName": "service-desk",
+          "cachedResultUrl": "https://console.cloud.google.com/bigquery?project=service-desk-472314"
+        },
+        "sqlQuery": "SELECT * FROM `service-desk-472314.coherent_voice_dataset.adsim_projects` ORDER BY ULTIMADATA_ATUALIZACAO DESC",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [
+        208,
+        -240
+      ],
+      "id": "93f52442-918d-4736-996d-5aec7f2e2fd7",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "googleApi": {
+          "id": "P1ObfdxLxoraseXn",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Função para converter nanosegundos para ISO string\nfunction convertNanosToISO(nanosStr) {\n    if (!nanosStr) return null;\n    const nanos = BigInt(nanosStr);\n    const millis = nanos / 1000000n;\n    return new Date(Number(millis)).toISOString();\n}\n\n// items é o input do nó Code\nreturn items.map(item => {\n    const data = item.json; // pega os dados de cada item\n\n    // converte datas\n    data.DATA_REGISTRO = convertNanosToISO(data.DATA_REGISTRO);\n    data.ULTIMADATA_ATUALIZACAO = convertNanosToISO(data.ULTIMADATA_ATUALIZACAO);\n    data.DATA_INICIO = convertNanosToISO(data.DATA_INICIO);\n    data.DATA_FINAL = convertNanosToISO(data.DATA_FINAL);\n\n    return { json: data }; // retorna no formato correto\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "id": "98eedeb3-5ceb-4679-abf0-94912317cfb5",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.produtos_adsim (\n  ID_PRODUTO, NAME_PRODUTO, NOTAS, VALOR_PRODUTO, STATUS,\n  DELETADO, CONTROLA_COTAS, CONSUMO_SALDO_VEICULACAO,\n  isAutomaticDistributedScheduling, isProposalAddItems,\n  isDigitalProposalAddItems, DATA_INICIO, DATA_FINAL,\n  ID_COMPANHIA, ID_GRUPO_COMPANHIA, TAGS, CODIGO_EXTERNO,\n  ORIGEM_PRODUTO, DATA_REGISTRO, ULTIMADATA_ATUALIZACAO,\n  PORTAL_E_MIDIA\n) VALUES (\n  {{ $json[\"ID_PRODUTO\"] }},\n  '{{ ($json[\"NAME_PRODUTO\"] || \"\").replace(/'/g, \"''\") }}',\n  '{{ ($json[\"NOTAS\"] || \"\").replace(/'/g, \"''\") }}',\n  {{ $json[\"VALOR_PRODUTO\"] || 0 }},\n  {{ $json[\"STATUS\"] !== undefined ? $json[\"STATUS\"] : 'true' }},\n  {{ $json[\"DELETADO\"] !== undefined ? $json[\"DELETADO\"] : 'false' }},\n  {{ $json[\"CONTROLA_COTAS\"] !== undefined ? $json[\"CONTROLA_COTAS\"] : 'false' }},\n  {{ $json[\"CONSUMO_SALDO_VEICULACAO\"] !== undefined ? $json[\"CONSUMO_SALDO_VEICULACAO\"] : 'false' }},\n  {{ $json[\"isAutomaticDistributedScheduling\"] !== undefined ? $json[\"isAutomaticDistributedScheduling\"] : 'false' }},\n  {{ $json[\"isProposalAddItems\"] !== undefined ? $json[\"isProposalAddItems\"] : 'false' }},\n  {{ $json[\"isDigitalProposalAddItems\"] !== undefined ? $json[\"isDigitalProposalAddItems\"] : 'false' }},\n  {{ $json[\"DATA_INICIO\"] !== null ? \"'\" + $json[\"DATA_INICIO\"] + \"'\" : \"NULL\" }},\n  {{ $json[\"DATA_FINAL\"] !== null ? \"'\" + $json[\"DATA_FINAL\"] + \"'\" : \"NULL\" }},\n  {{ $json[\"ID_COMPANHIA\"] || 0 }},\n  {{ $json[\"ID_GRUPO_COMPANHIA\"] || 0 }},\n  '{{ ($json[\"TAGS\"] || \"[]\").replace(/'/g, \"''\") }}',\n  '{{ ($json[\"CODIGO_EXTERNO\"] || \"\").replace(/'/g, \"''\") }}',\n  '{{ ($json[\"ORIGEM_PRODUTO\"] || \"\").replace(/'/g, \"''\") }}',\n  {{ $json[\"DATA_REGISTRO\"] !== null ? \"'\" + $json[\"DATA_REGISTRO\"] + \"'\" : \"NULL\" }},\n  {{ $json[\"ULTIMADATA_ATUALIZACAO\"] !== null ? \"'\" + $json[\"ULTIMADATA_ATUALIZACAO\"] + \"'\" : \"NULL\" }},\n  {{ $json[\"PORTAL_E_MIDIA\"] !== undefined ? $json[\"PORTAL_E_MIDIA\"] : 'false' }}\n)\nON CONFLICT (ID_PRODUTO) DO UPDATE SET\n  NAME_PRODUTO                   = EXCLUDED.NAME_PRODUTO,\n  NOTAS                          = EXCLUDED.NOTAS,\n  VALOR_PRODUTO                  = EXCLUDED.VALOR_PRODUTO,\n  STATUS                         = EXCLUDED.STATUS,\n  DELETADO                       = EXCLUDED.DELETADO,\n  CONTROLA_COTAS                 = EXCLUDED.CONTROLA_COTAS,\n  CONSUMO_SALDO_VEICULACAO       = EXCLUDED.CONSUMO_SALDO_VEICULACAO,\n  isAutomaticDistributedScheduling = EXCLUDED.isAutomaticDistributedScheduling,\n  isProposalAddItems             = EXCLUDED.isProposalAddItems,\n  isDigitalProposalAddItems      = EXCLUDED.isDigitalProposalAddItems,\n  DATA_INICIO                    = EXCLUDED.DATA_INICIO,\n  DATA_FINAL                     = EXCLUDED.DATA_FINAL,\n  ID_COMPANHIA                   = EXCLUDED.ID_COMPANHIA,\n  ID_GRUPO_COMPANHIA             = EXCLUDED.ID_GRUPO_COMPANHIA,\n  TAGS                           = EXCLUDED.TAGS,\n  CODIGO_EXTERNO                 = EXCLUDED.CODIGO_EXTERNO,\n  ORIGEM_PRODUTO                 = EXCLUDED.ORIGEM_PRODUTO,\n  DATA_REGISTRO                  = EXCLUDED.DATA_REGISTRO,\n  ULTIMADATA_ATUALIZACAO         = EXCLUDED.ULTIMADATA_ATUALIZACAO,\n  PORTAL_E_MIDIA                 = EXCLUDED.PORTAL_E_MIDIA;\n\nDELETE FROM public.produtos_adsim a\nUSING public.produtos_adsim b\nWHERE a.ctid < b.ctid\n  AND a.ID_PRODUTO = b.ID_PRODUTO\n  AND a.NAME_PRODUTO = b.NAME_PRODUTO;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        608,
+        -240
+      ],
+      "id": "d55f1990-0789-425f-bdec-7b9cefa75620",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "pLSsHwpYD5mnH2Cn",
+          "name": "Postgres localhost acess"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a6a463db-eccb-4623-8c07-bc28b5c077ec",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e6ed923384cf08e422f15a1e80d73a7eab3ebd3551c7d14ee8736f66ea156267"
+  },
+  "id": "NIPapQ3ASy6XW7ay",
+  "tags": []
+}

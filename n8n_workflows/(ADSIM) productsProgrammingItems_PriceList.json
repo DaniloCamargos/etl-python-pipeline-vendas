@@ -1,0 +1,109 @@
+{
+  "name": "(ADSIM) productsProgrammingItems_PriceList",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "643cf378-2422-4552-9365-3c806047fc59",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": {
+          "__rl": true,
+          "value": "service-desk-472314",
+          "mode": "list",
+          "cachedResultName": "service-desk",
+          "cachedResultUrl": "https://console.cloud.google.com/bigquery?project=service-desk-472314"
+        },
+        "sqlQuery": "SELECT * FROM `service-desk-472314.coherent_voice_dataset.adsim_products_programming_priceList` ORDER BY ITEMS_ID DESC",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [
+        208,
+        -224
+      ],
+      "id": "1058b95b-b242-4d2c-aced-21182840ac05",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "googleApi": {
+          "id": "P1ObfdxLxoraseXn",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.adsim_products_programming_pricelist (\n  ITEMS_ID,\n  PRICELIST_ID,\n  PRICELIST_NAME,\n  PRICELIST_REGISTERDATE,\n  PRICELIST_LASTUPDATEDATE,\n  PRICELIST_START,\n  PRICELIST_END\n) VALUES (\n  {{ $json[\"ITEMS_ID\"] && $json[\"ITEMS_ID\"] !== \"\" && !isNaN($json[\"ITEMS_ID\"]) ? parseInt($json[\"ITEMS_ID\"]) : 0 }},\n  {{ $json[\"PRICELIST_ID\"] && $json[\"PRICELIST_ID\"] !== \"\" && !isNaN($json[\"PRICELIST_ID\"]) ? parseInt($json[\"PRICELIST_ID\"]) : 0 }},\n  {{ $json[\"PRICELIST_NAME\"] && $json[\"PRICELIST_NAME\"] !== \"\" && !isNaN($json[\"PRICELIST_NAME\"]) ? parseInt($json[\"PRICELIST_NAME\"]) : 0 }},\n  {{ $json[\"PRICELIST_REGISTERDATE\"] && $json[\"PRICELIST_REGISTERDATE\"] !== \"\" ? \"'\" + $json[\"PRICELIST_REGISTERDATE\"] + \"'\" : \"NULL\" }},\n  {{ $json[\"PRICELIST_LASTUPDATEDATE\"] && $json[\"PRICELIST_LASTUPDATEDATE\"] !== \"\" ? \"'\" + $json[\"PRICELIST_LASTUPDATEDATE\"] + \"'\" : \"NULL\" }},\n  {{ $json[\"PRICELIST_START\"] && $json[\"PRICELIST_START\"] !== \"\" ? \"'\" + $json[\"PRICELIST_START\"] + \"'\" : \"NULL\" }},\n  {{ $json[\"PRICELIST_END\"] && $json[\"PRICELIST_END\"] !== \"\" ? \"'\" + $json[\"PRICELIST_END\"] + \"'\" : \"NULL\" }}\n);\n\nDELETE FROM public.adsim_products_programming_pricelist a\nUSING public.adsim_products_programming_pricelist b\nWHERE a.ctid < b.ctid\n  AND a.ITEMS_ID = b.ITEMS_ID\n  AND a.PRICELIST_ID = b.PRICELIST_ID;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        416,
+        0
+      ],
+      "id": "b4b0e015-1a34-4dc7-b650-d95098dd13fc",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "pLSsHwpYD5mnH2Cn",
+          "name": "Postgres localhost acess"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e118b117-5ff7-48b8-b777-041d25692a17",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e6ed923384cf08e422f15a1e80d73a7eab3ebd3551c7d14ee8736f66ea156267"
+  },
+  "id": "Vanbr0dUSUXgLHyw",
+  "tags": []
+}

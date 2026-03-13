@@ -1,0 +1,65 @@
+name: Deploy Cloud Functions & n8n Workflows
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Clonar repositório
+      - uses: actions/checkout@v3
+
+      # 2️⃣ Configurar gcloud
+      - uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: service-desk-472314
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      # 3️⃣ Instalar dependências Python
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || echo "No requirements"
+
+      # 4️⃣ Deploy de todas as Cloud Functions
+      - name: Deploy Cloud Functions
+        run: |
+          for func in cloud_functions/*; do
+            fname=$(basename $func)
+            echo "Deploying $fname..."
+            gcloud functions deploy $fname \
+              --runtime python310 \
+              --trigger-http \
+              --allow-unauthenticated \
+              --entry-point main \
+              --region southamerica-east1 \
+              --source $func
+          done
+
+      # 5️⃣ Versionar workflows do n8n
+      - name: Commit n8n workflows
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add n8n-workflows/*.json
+          git commit -m "Versioned n8n workflows [ci skip]" || echo "No changes"
+          git push origin main || echo "Push failed"
+
+      # 6️⃣ Atualizar workflows do n8n via API (opcional)
+      - name: Update n8n workflows via API
+        if: secrets.N8N_API_KEY != ''
+        env:
+          N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
+          N8N_URL: ${{ secrets.N8N_URL }}
+        run: |
+          for workflow in n8n-workflows/*.json; do
+            echo "Updating $workflow in n8n..."
+            curl -X POST "$N8N_URL/workflows/import" \
+              -H "Authorization: Bearer $N8N_API_KEY" \
+              -F "file=@$workflow"
+          done

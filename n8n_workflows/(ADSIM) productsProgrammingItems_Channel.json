@@ -1,0 +1,109 @@
+{
+  "name": "(ADSIM) productsProgrammingItems_Channel",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -352,
+        -32
+      ],
+      "id": "c6ee2b87-7a52-4df9-a260-fb64d2b647cf",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": {
+          "__rl": true,
+          "value": "service-desk-472314",
+          "mode": "list",
+          "cachedResultName": "service-desk",
+          "cachedResultUrl": "https://console.cloud.google.com/bigquery?project=service-desk-472314"
+        },
+        "sqlQuery": "SELECT * FROM `service-desk-472314.coherent_voice_dataset.adsim_products_programming_channel` ORDER BY CHANNEL_ID DESC",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [
+        -96,
+        -288
+      ],
+      "id": "ef7e6725-b4a8-4165-9c96-a53bf78fa1b6",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "googleApi": {
+          "id": "P1ObfdxLxoraseXn",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.adsim_products_programming_channel (\n    PRODUCT_ID,\n    PROGRAMMING_ID,\n    ITEMS_ID,\n    CHANNEL_ID,\n    CHANNEL_NAME,\n    CHANNEL_INITIALS\n) VALUES (\n    {{ $json[\"PRODUCT_ID\"] }},\n    {{ $json[\"PROGRAMMING_ID\"] || 0 }},\n    {{ $json[\"ITEMS_ID\"] || 0 }},\n    {{ $json[\"CHANNEL_ID\"] || 0 }},\n    '{{ ($json[\"CHANNEL_NAME\"] || \"\").replace(/'/g, \"''\") }}',\n    '{{ ($json[\"CHANNEL_INITIALS\"] || \"\").replace(/'/g, \"''\") }}'\n);\n\nDELETE FROM public.adsim_products_programming_channel a\nUSING public.adsim_products_programming_channel b\nWHERE a.ctid < b.ctid\n  AND a.PRODUCT_ID = b.PRODUCT_ID\n  AND a.PROGRAMMING_ID = b.PROGRAMMING_ID\n  AND a.ITEMS_ID = b.ITEMS_ID\n  AND a.CHANNEL_ID = b.CHANNEL_ID;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        96,
+        -48
+      ],
+      "id": "f73a2db9-84cc-4e81-a38c-b0307d54f075",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "pLSsHwpYD5mnH2Cn",
+          "name": "Postgres localhost acess"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7f964a68-4c2f-4c72-b496-5c25a26f20ac",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e6ed923384cf08e422f15a1e80d73a7eab3ebd3551c7d14ee8736f66ea156267"
+  },
+  "id": "O9ZnXPtikzhiZWfz",
+  "tags": []
+}

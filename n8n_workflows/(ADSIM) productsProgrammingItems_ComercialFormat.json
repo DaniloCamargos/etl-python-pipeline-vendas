@@ -1,0 +1,109 @@
+{
+  "name": "(ADSIM) productsProgrammingItems_ComercialFormat",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -304,
+        0
+      ],
+      "id": "f86d3c18-44c9-491e-9f20-05f22476aa04",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": {
+          "__rl": true,
+          "value": "service-desk-472314",
+          "mode": "list",
+          "cachedResultName": "service-desk",
+          "cachedResultUrl": "https://console.cloud.google.com/bigquery?project=service-desk-472314"
+        },
+        "sqlQuery": "SELECT * FROM `service-desk-472314.coherent_voice_dataset.adsim_products_programming_comercialFormat` ORDER BY ITEMS_ID;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [
+        -16,
+        -224
+      ],
+      "id": "195f4788-0e2e-4c57-9a5a-c28490791441",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "googleApi": {
+          "id": "P1ObfdxLxoraseXn",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.adsim_products_programming_comercialformat (\n    ITEMS_ID,\n    COMERCIALFORMAT_ID,\n    COMERCIALFORMAT_NAME,\n    COMERCIALFORMAT_INITIALS\n) VALUES (\n    {{ $json[\"ITEMS_ID\"] || 0 }},\n    {{ $json[\"COMERCIALFORMAT_ID\"] || 0 }},\n    '{{ ($json[\"COMERCIALFORMAT_NAME\"] || \"\").replace(/'/g, \"''\") }}',\n    '{{ ($json[\"COMERCIALFORMAT_INITIALS\"] || \"\").replace(/'/g, \"''\") }}'\n);\n\nDELETE FROM public.adsim_products_programming_comercialformat a\nUSING public.adsim_products_programming_comercialformat b\nWHERE a.ctid < b.ctid\n  AND a.ITEMS_ID = b.ITEMS_ID\n  AND a.COMERCIALFORMAT_ID = b.COMERCIALFORMAT_ID;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        304,
+        16
+      ],
+      "id": "46cd7085-d09d-4f6b-8ae7-b3d2ff7002bd",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "pLSsHwpYD5mnH2Cn",
+          "name": "Postgres localhost acess"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "755d2dd8-4886-4d9f-b327-38120ceb433b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e6ed923384cf08e422f15a1e80d73a7eab3ebd3551c7d14ee8736f66ea156267"
+  },
+  "id": "Pm8c6KlU3F4F6scF",
+  "tags": []
+}

@@ -1,0 +1,109 @@
+{
+  "name": "(ADSIM) productsProgrammingItems_DisplayLocation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9fb54d4f-9901-482a-a9bb-7db5a219c9a7",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": {
+          "__rl": true,
+          "value": "service-desk-472314",
+          "mode": "list",
+          "cachedResultName": "service-desk",
+          "cachedResultUrl": "https://console.cloud.google.com/bigquery?project=service-desk-472314"
+        },
+        "sqlQuery": "SELECT * FROM service-desk-472314.coherent_voice_dataset.adsim_products_programming_displayLocation ORDER BY ITEMS_ID DESC;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [
+        224,
+        -224
+      ],
+      "id": "549b8281-6ee3-4d81-b08e-6b5cf8c47012",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "googleApi": {
+          "id": "P1ObfdxLxoraseXn",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.adsim_products_programming_displaylocation (\n  PRODUCT_ID,\n  PROGRAMMING_ID,\n  ITEMS_ID,\n  DISPLAYLOCATION_ID,\n  DISPLAYLOCATION_NAME,\n  DISPLAYLOCATION_INITIALS\n) VALUES (\n  {{ $json[\"PRODUCT_ID\"] && $json[\"PRODUCT_ID\"] !== \"\" && !isNaN($json[\"PRODUCT_ID\"]) ? parseInt($json[\"PRODUCT_ID\"]) : 0 }},\n  \n  {{ $json[\"PROGRAMMING_ID\"] && $json[\"PROGRAMMING_ID\"] !== \"\" && !isNaN($json[\"PROGRAMMING_ID\"]) ? parseInt($json[\"PROGRAMMING_ID\"]) : 0 }},\n  \n  {{ $json[\"ITEMS_ID\"] && $json[\"ITEMS_ID\"] !== \"\" && !isNaN($json[\"ITEMS_ID\"]) ? parseInt($json[\"ITEMS_ID\"]) : 0 }},\n  \n  {{ $json[\"DISPLAYLOCATION_ID\"] && $json[\"DISPLAYLOCATION_ID\"] !== \"\" && !isNaN($json[\"DISPLAYLOCATION_ID\"]) ? parseInt($json[\"DISPLAYLOCATION_ID\"]) : 0 }},\n  \n  '{{ $json[\"DISPLAYLOCATION_NAME\"] && $json[\"DISPLAYLOCATION_NAME\"] !== \"\" ? $json[\"DISPLAYLOCATION_NAME\"].replace(/'/g, \"''\") : \"\" }}',\n  \n  '{{ $json[\"DISPLAYLOCATION_INITIALS\"] && $json[\"DISPLAYLOCATION_INITIALS\"] !== \"\" ? $json[\"DISPLAYLOCATION_INITIALS\"].replace(/'/g, \"''\") : \"\" }}'\n);\n\n\nDELETE FROM public.adsim_products_programming_displaylocation a\nUSING public.adsim_products_programming_displaylocation b\nWHERE a.ctid < b.ctid\n  AND a.ITEMS_ID = b.ITEMS_ID\n  AND a.PROGRAMMING_ID = b.PROGRAMMING_ID\n  AND a.PRODUCT_ID = b.PRODUCT_ID;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        416,
+        0
+      ],
+      "id": "47b5c014-cbc3-46bd-9982-3ed2d2c2aa5b",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "pLSsHwpYD5mnH2Cn",
+          "name": "Postgres localhost acess"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "51b965c8-4b95-40bd-ada9-ae08671770a8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e6ed923384cf08e422f15a1e80d73a7eab3ebd3551c7d14ee8736f66ea156267"
+  },
+  "id": "NME6OnCKnsK7Bi5m",
+  "tags": []
+}

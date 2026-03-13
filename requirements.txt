@@ -1,0 +1,7 @@
+functions-framework
+pandas
+requests
+pytz
+google-cloud-bigquery
+pyarrow
+python-dotenv

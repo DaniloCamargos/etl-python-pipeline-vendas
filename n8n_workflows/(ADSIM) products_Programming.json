@@ -1,0 +1,109 @@
+{
+  "name": "(ADSIM) products_Programming",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c9d4c2bb-16d1-4dc4-b7db-be15b732bdbc",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": {
+          "__rl": true,
+          "value": "service-desk-472314",
+          "mode": "list",
+          "cachedResultName": "service-desk",
+          "cachedResultUrl": "https://console.cloud.google.com/bigquery?project=service-desk-472314"
+        },
+        "sqlQuery": "SELECT * FROM `service-desk-472314.coherent_voice_dataset.adsim_products_programming` ORDER BY PROGRAMMING_REGISTER_DATE DESC",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [
+        176,
+        -256
+      ],
+      "id": "27c2c36f-4793-4e8b-8199-9425f4ba0fab",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "googleApi": {
+          "id": "P1ObfdxLxoraseXn",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.produtos_programming_adsim (\nPRODUCT_ID, PRODUCT_NAME, PROGRAMMING_ID, PROGRAMMING_REGISTER_DATE, PROGRAMMING_START, PROGRAMMING_END, PROGRAMMING_ITEMS_COUNT\n) VALUES (\n  {{ $json[\"PRODUCT_ID\"] }},\n  '{{ ($json[\"PRODUCT_NAME\"] || \"\").replace(/'/g, \"''\") }}',\n  {{ $json[\"PROGRAMMING_ID\"] || 0 }},\n  {{ $json[\"PROGRAMMING_ITEMS_COUNT\"] }},\n  {{ $json[\"PROGRAMMING_START\"] !== null ? \"'\" + $json[\"PROGRAMMING_START\"] + \"'\" : \"NULL\" }},\n  {{ $json[\"PROGRAMMING_END\"] !== null ? \"'\" + $json[\"PROGRAMMING_END\"] + \"'\" : \"NULL\" }},\n  {{ $json[\"PROGRAMMING_REGISTER_DATE\"] !== null ? \"'\" + $json[\"PROGRAMMING_REGISTER_DATE\"] + \"'\" : \"NULL\" }}\n\n)\nON CONFLICT (PRODUCT_ID) DO UPDATE SET\n  PRODUCT_NAME                   = EXCLUDED.PRODUCT_NAME,\n  PROGRAMMING_ID                 = EXCLUDED.PROGRAMMING_ID,\n  PROGRAMMING_ITEMS_COUNT        = EXCLUDED.PROGRAMMING_ITEMS_COUNT\n  PROGRAMMING_START              = EXCLUDE.PROGRAMMING_START\n  PROGRAMMING_END                = EXCLUDE.PROGRAMMING_END\n  PROGRAMMING_REGISTER_DATE      = EXCLUDE.PROGRAMMING_REGISTER_DATE\n\n  \nDELETE FROM public.produtos_programming_adsim a\nUSING public.produtos_programming_adsim b\nWHERE a.ctid < b.ctid\n  AND a.PRODUCT_ID = b.PRODUCT_ID\n  AND a.PRODUCT_NAME = b.PRODUCT_NAME;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        336,
+        -16
+      ],
+      "id": "9172379d-f03c-4cdd-a475-cc7b281eb4f6",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "pLSsHwpYD5mnH2Cn",
+          "name": "Postgres localhost acess"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4ec4ad36-03cb-44b5-b209-b740ae48a6af",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e6ed923384cf08e422f15a1e80d73a7eab3ebd3551c7d14ee8736f66ea156267"
+  },
+  "id": "WS1LIuUTzr3hibJv",
+  "tags": []
+}

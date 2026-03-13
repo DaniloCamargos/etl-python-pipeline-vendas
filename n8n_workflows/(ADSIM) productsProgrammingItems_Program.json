@@ -1,0 +1,109 @@
+{
+  "name": "(ADSIM) productsProgrammingItems_Program",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6e9e9a15-d25b-403a-b368-44b057cc4a8e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": {
+          "__rl": true,
+          "value": "service-desk-472314",
+          "mode": "list",
+          "cachedResultName": "service-desk",
+          "cachedResultUrl": "https://console.cloud.google.com/bigquery?project=service-desk-472314"
+        },
+        "sqlQuery": "SELECT * FROM `service-desk-472314.coherent_voice_dataset.adsim_products_programming_program` ORDER BY ITEMS_ID DESC",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [
+        208,
+        -192
+      ],
+      "id": "7c9bf788-9f9d-4b20-acce-723fdabbb4d9",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "googleApi": {
+          "id": "P1ObfdxLxoraseXn",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.adsim_products_programming_program(\n  ITEMS_ID,\n  PROGRAM_ID,\n  PROGRAM_NAME,\n  PROGRAM_INITIALS\n)VALUES (\n    {{ $json[\"ITEMS_ID\"] || 0 }},\n    {{ $json[\"PROGRAM_ID\"] || 0 }},\n    '{{ ($json[\"PROGRAM_NAME\"] || \"\").replace(/'/g, \"''\") }}',\n    '{{ ($json[\"PROGRAM_INITIALS\"] || \"\").replace(/'/g, \"''\") }}'\n  );\n\nDELETE FROM public.adsim_products_programming_program a\nUSING public.adsim_products_programming_program b\nWHERE a.ctid < b.ctid\n  AND a.ITEMS_ID = b.ITEMS_ID\n  AND a.PROGRAM_ID = b.PROGRAM_ID;\n  \n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        416,
+        0
+      ],
+      "id": "17f91aa0-b5bc-4501-8419-89d5ab02d4fa",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "pLSsHwpYD5mnH2Cn",
+          "name": "Postgres localhost acess"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "336aa251-c2c8-4b07-891d-41601f4ace2d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e6ed923384cf08e422f15a1e80d73a7eab3ebd3551c7d14ee8736f66ea156267"
+  },
+  "id": "5aFoRO4HXtnjBRqZ",
+  "tags": []
+}
